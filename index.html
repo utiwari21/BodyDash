@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Subway Surfer IRL — Movement Capture</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Movement detector</h1>
+    <p class="subtitle">Stand back from your camera so your full body is visible.</p>
+
+    <div class="video-wrapper">
+      <video id="video" playsinline style="display: none;"></video>
+      <canvas id="gameCanvas"></canvas>
+      <canvas id="camCanvas" class="cam-preview"></canvas>
+    </div>
+
+    <div class="lane-debug-row">
+      <div class="lane-debug-label">Lane zones (debug)</div>
+      <canvas id="laneDebugCanvas"></canvas>
+    </div>
+
+    <div class="controls">
+      <button id="startBtn">Start camera</button>
+      <span id="permissionMsg"></span>
+    </div>
+
+    <div class="status">
+      <div>Status: <span id="statusText">Idle</span></div>
+      <div>FPS: <span id="fpsText">0</span></div>
+    </div>
+
+    <div class="movement-grid">
+      <div class="movement-box" id="jumpBox">
+        <div class="label">Jump</div>
+        <div class="value" id="jumpValue">0.00</div>
+      </div>
+      <div class="movement-box" id="crouchBox">
+        <div class="label">Crouch</div>
+        <div class="value" id="crouchValue">0.00</div>
+      </div>
+      <div class="movement-box" id="leftBox">
+        <div class="label">Left dodge</div>
+        <div class="value" id="leftValue">0.00</div>
+      </div>
+      <div class="movement-box" id="rightBox">
+        <div class="label">Right dodge</div>
+        <div class="value" id="rightValue">0.00</div>
+      </div>
+    </div>
+
+    <div class="calibrate-row">
+      <button id="calibrateBtn">Recalibrate baseline</button>
+    </div>
+
+    <div class="debug-panel">
+      <div class="debug-title">Debug log (left/right detection)</div>
+      <pre id="debugLog">Waiting for camera start...</pre>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
