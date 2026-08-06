@@ -15,6 +15,11 @@
       <video id="video" playsinline style="display: none;"></video>
       <canvas id="gameCanvas"></canvas>
       <canvas id="camCanvas" class="cam-preview"></canvas>
+      <div class="hud">
+        <div>Score: <span id="scoreText">0</span></div>
+        <div>Streak: <span id="streakText">0</span></div>
+        <div>Level: <span id="levelText">1</span></div>
+      </div>
     </div>
 
     <div class="lane-debug-row">
@@ -24,6 +29,7 @@
 
     <div class="controls">
       <button id="startBtn">Start camera</button>
+      <button id="muteBtn">Mute commentator</button>
       <span id="permissionMsg"></span>
     </div>
 

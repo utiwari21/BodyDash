@@ -54,6 +54,20 @@ h1 {
   background: #000;
 }
 
+.hud {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  gap: 12px;
+  color: #fff;
+}
+
 .lane-debug-row {
   margin-top: 12px;
 }
@@ -65,7 +79,7 @@ h1 {
 }
 
 #laneDebugCanvas {
-  width: 15px;
+  width: 120px;
   height: 60px;
   border: 1px solid #2a2a2a;
   border-radius: 6px;
@@ -92,6 +106,14 @@ button {
 
 button:hover {
   background: #2a63b3;
+}
+
+button.muted {
+  background: #444;
+}
+
+button.muted:hover {
+  background: #555;
 }
 
 #permissionMsg {

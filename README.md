@@ -85,6 +85,7 @@ from it.
 
 ## Next steps (not yet built)
 
+- Running!
 - Obstacle spawning and scrolling logic, checked against `character.lane` / `isJumping` / `isCrouching`
 - Collision detection
 - Scoring system
