@@ -83,9 +83,10 @@ The small camera preview (bottom-right corner) is for calibration only — it sh
 feed with skeleton overlay so you can see what the model sees, but no gameplay code reads
 from it.
 
-## Next steps (not yet built)
+## Building now
 
 - Running!
+- AWS Deployment
 - Obstacle spawning and scrolling logic, checked against `character.lane` / `isJumping` / `isCrouching`
 - Collision detection
 - Scoring system
