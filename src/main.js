@@ -834,3 +834,10 @@ calibrateBtn.addEventListener("click", () => {
   countdownRemaining = COUNTDOWN_MS;
   statusText.textContent = "Recalibrating...";
 });
+
+//summary of the code above: auto fill is on
+  //main file for a web-based game that uses MediaPipe Pose Landmarker to track the player's movements via webcam. 
+  // The game features a character running along a track with obstacles, and the player can control the character's lane position,
+  //  jumping, and crouching by moving their body. The code handles camera initialization, pose detection, character state updates,
+  //  and rendering of the game scene, including the sky, ground, river, gravel, sleepers, rails, lane borders, trees, and the character
+  //  itself. It also includes a debug log for tracking calibration and pose analysis.
