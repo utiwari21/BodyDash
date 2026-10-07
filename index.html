@@ -3,68 +3,74 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Subway Surfer IRL — Movement Capture</title>
+  <meta name="description" content="BodyDash is a runner game you play with your whole body. Step left or right, jump, and crouch in front of your webcam. No controller or download needed." />
+  <title>BodyDash: your body is the controller</title>
   <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
   <div class="container">
-    <h1>Movement detector</h1>
-    <p class="subtitle">Stand back from your camera so your full body is visible.</p>
+    <h1>BodyDash</h1>
+    <p class="subtitle">Stand back until your whole body fits in the camera. Step left or right to switch tracks, and jump or crouch to move your runner.</p>
 
     <div class="video-wrapper">
       <video id="video" playsinline style="display: none;"></video>
       <canvas id="gameCanvas"></canvas>
       <canvas id="camCanvas" class="cam-preview"></canvas>
-      <div class="hud">
+      <!-- Score display: hidden until obstacles are added -->
+      <div class="hud" hidden>
         <div>Score: <span id="scoreText">0</span></div>
         <div>Streak: <span id="streakText">0</span></div>
         <div>Level: <span id="levelText">1</span></div>
       </div>
     </div>
 
-    <div class="lane-debug-row">
-      <div class="lane-debug-label">Lane zones (debug)</div>
-      <canvas id="laneDebugCanvas"></canvas>
-    </div>
-
     <div class="controls">
       <button id="startBtn">Start camera</button>
-      <button id="muteBtn">Mute commentator</button>
+      <button id="calibrateBtn" class="secondary">Recalibrate</button>
+      <!-- Voice commentator toggle: hidden until the commentator is added -->
+      <button id="muteBtn" hidden>Mute commentator</button>
       <span id="permissionMsg"></span>
     </div>
 
-    <div class="status">
-      <div>Status: <span id="statusText">Idle</span></div>
-      <div>FPS: <span id="fpsText">0</span></div>
-    </div>
+    <p class="status">Status: <span id="statusText">Idle</span></p>
+    <p class="privacy-note">Your camera feed is processed on your device and is never uploaded.</p>
 
-    <div class="movement-grid">
-      <div class="movement-box" id="jumpBox">
-        <div class="label">Jump</div>
-        <div class="value" id="jumpValue">0.00</div>
-      </div>
-      <div class="movement-box" id="crouchBox">
-        <div class="label">Crouch</div>
-        <div class="value" id="crouchValue">0.00</div>
-      </div>
-      <div class="movement-box" id="leftBox">
-        <div class="label">Left dodge</div>
-        <div class="value" id="leftValue">0.00</div>
-      </div>
-      <div class="movement-box" id="rightBox">
-        <div class="label">Right dodge</div>
-        <div class="value" id="rightValue">0.00</div>
-      </div>
-    </div>
+    <details class="debug-section">
+      <summary><span class="label-closed">Show</span><span class="label-open">Hide</span> tracking details</summary>
 
-    <div class="calibrate-row">
-      <button id="calibrateBtn">Recalibrate baseline</button>
-    </div>
+      <div class="debug-body">
+        <div class="lane-debug-row">
+          <div class="lane-debug-label">Lane zones</div>
+          <canvas id="laneDebugCanvas"></canvas>
+        </div>
 
-    <div class="debug-panel">
-      <div class="debug-title">Debug log (left/right detection)</div>
-      <pre id="debugLog">Waiting for camera start...</pre>
-    </div>
+        <div class="movement-grid">
+          <div class="movement-box" id="jumpBox">
+            <div class="label">Jump</div>
+            <div class="value" id="jumpValue">0.00</div>
+          </div>
+          <div class="movement-box" id="crouchBox">
+            <div class="label">Crouch</div>
+            <div class="value" id="crouchValue">0.00</div>
+          </div>
+          <div class="movement-box" id="leftBox">
+            <div class="label">Left dodge</div>
+            <div class="value" id="leftValue">0.00</div>
+          </div>
+          <div class="movement-box" id="rightBox">
+            <div class="label">Right dodge</div>
+            <div class="value" id="rightValue">0.00</div>
+          </div>
+        </div>
+
+        <p class="debug-fps">FPS: <span id="fpsText">0</span></p>
+
+        <div class="debug-panel">
+          <div class="debug-title">Event log</div>
+          <pre id="debugLog">Waiting for camera start...</pre>
+        </div>
+      </div>
+    </details>
   </div>
 
   <script type="module" src="/src/main.js"></script>

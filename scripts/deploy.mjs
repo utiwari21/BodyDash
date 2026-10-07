@@ -35,18 +35,42 @@ function fail(message) {
   process.exit(1);
 }
 
+// Default install locations, used when a terminal was opened before the CLI was
+// installed (or VS Code is still running with its old PATH).
+const AWS_CLI_FALLBACKS = [
+  process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, "Programs", "Amazon", "AWSCLIV2", "aws.exe"),
+  process.env.ProgramFiles && path.join(process.env.ProgramFiles, "Amazon", "AWSCLIV2", "aws.exe"),
+  "/usr/local/bin/aws",
+  "/opt/homebrew/bin/aws",
+].filter(Boolean);
+
+let awsBin = "aws";
+
+// Finds the AWS CLI: first on PATH, then in its default install folders.
+function locateAwsCli() {
+  const probe = spawnSync("aws", ["--version"], { stdio: "ignore" });
+  if (!probe.error) return;
+  if (probe.error.code !== "ENOENT") {
+    fail(`Could not run the AWS CLI: ${probe.error.message}`);
+  }
+  const found = AWS_CLI_FALLBACKS.find((candidate) => existsSync(candidate));
+  if (!found) {
+    fail("AWS CLI not found. Install it (DEPLOY.md step 1), then open a NEW terminal and retry.");
+  }
+  awsBin = found;
+  warn(`This terminal can't see the AWS CLI on its PATH, so using ${found} directly.`);
+  warn("To fix it permanently, fully quit and reopen VS Code (or close every terminal window).");
+}
+
 // Runs the AWS CLI directly (no shell), so arguments like "/*" reach AWS unchanged
 // on Windows, macOS, and Linux alike.
 function aws(args, { capture = false } = {}) {
-  const result = spawnSync("aws", args, {
+  const result = spawnSync(awsBin, args, {
     encoding: "utf8",
     stdio: capture ? ["ignore", "pipe", "pipe"] : "inherit",
     env: { ...process.env, AWS_PAGER: "" },
   });
   if (result.error) {
-    if (result.error.code === "ENOENT") {
-      fail("AWS CLI not found. Install it (DEPLOY.md step 2), then open a NEW terminal and retry.");
-    }
     fail(`Could not run the AWS CLI: ${result.error.message}`);
   }
   return result;
@@ -71,6 +95,7 @@ function checkBuild() {
 
 function checkCliVersion() {
   step("Checking the AWS CLI");
+  locateAwsCli();
   const result = aws(["--version"], { capture: true });
   const output = `${result.stdout}${result.stderr}`;
   const match = output.match(/aws-cli\/(\d+)\.(\d+)\.(\d+)/);
@@ -80,7 +105,7 @@ function checkCliVersion() {
   const [major, minor, patch] = match.slice(1).map(Number);
   console.log(`   AWS CLI ${major}.${minor}.${patch}`);
   if (major < 2 || (major === 2 && minor < 32)) {
-    warn('This version is older than 2.32.0 and does not support "aws login". Reinstall the latest v2 (DEPLOY.md step 2).');
+    warn('This version is older than 2.32.0 and does not support "aws login". Reinstall the latest v2 (DEPLOY.md step 1).');
   }
 }
 

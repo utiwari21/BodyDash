@@ -11,38 +11,29 @@ npm run deploy
         ├─ preflight checks: AWS CLI installed, logged in to the right account,
         │                    CloudFront settings correct
         ├─ aws s3 sync ───────► private S3 bucket (us-east-2)
-        └─ cache refresh ─────► CloudFront (HTTPS CDN) ──► https://xxxx.cloudfront.net
+        └─ cache refresh ─────► CloudFront (HTTPS CDN) ──► https://d1p30moihm4q7m.cloudfront.net
 ```
 
-**Time:** about 20 minutes the first time, then about 30 seconds per deploy.
+**Live link:** https://d1p30moihm4q7m.cloudfront.net
 
 ## Your setup
 
 | Setting | Value |
 |---|---|
-| AWS account ID | `435636069010` |
+| AWS account ID (Sunrise Sprint project) | `782083514989` |
 | Region | `us-east-2` |
+| S3 bucket | `bodydash-utiwari21` (private, read only by CloudFront) |
 | CloudFront distribution ID | `EQAFN7YQ3MY5U` |
-| S3 bucket | Detected automatically from the CloudFront origin |
+| CloudFront domain | `d1p30moihm4q7m.cloudfront.net` |
 | AWS plan | Free plan, ends **Apr 6, 2027** (see the reminder at the bottom) |
+
+**About the two account IDs:** on AWS's simplified setup, each project runs in its own AWS account. `782083514989` is the Sunrise Sprint project account, where the bucket and distribution live. You'll also see `435636069010` in AWS Settings; that's the top-level account and isn't used for deploys.
 
 These values are already filled in at the top of `scripts/deploy.mjs`.
 
 ---
 
-## Step 1 — Check your CloudFront settings (~3 min)
-
-Open the AWS Console from your **Sunrise Sprint** project, go to **CloudFront**, and open distribution `EQAFN7YQ3MY5U`.
-
-1. **General** tab, then **Settings**, then **Edit**: make sure **Default root object** is `index.html`. Save if you changed it.
-2. **Behaviors** tab: make sure **Viewer protocol policy** is **Redirect HTTP to HTTPS**. The camera only works over HTTPS.
-3. Go to **S3**, open your bucket, then **Permissions**, then **Bucket policy**. It should mention `cloudfront.amazonaws.com`. If it's empty, go back to CloudFront, open the **Origins** tab, edit the origin, and use **Copy policy**. Then paste it into the bucket policy and save.
-
-You don't need to memorize these. The deploy script also warns you if the root object or HTTPS setting is wrong.
-
----
-
-## Step 2 — Install the AWS CLI (~5 min)
+## Step 1 — Install the AWS CLI (~5 min, one time)
 
 1. In PowerShell, run AWS's official install script:
 
@@ -50,78 +41,121 @@ You don't need to memorize these. The deploy script also warns you if the root o
    irm https://awscli.amazonaws.com/v2/install.ps1 | iex
    ```
 
-2. **Close every terminal and open a new one.** The `aws` command won't be found until you do.
+2. **Close every terminal and open a new one.** If you use VS Code's built-in terminal, quit VS Code completely and reopen it, because its terminals keep the old settings even when you open a new tab. The `aws` command won't be found until you do.
 3. Check the version:
 
-   ```bash
+   ```powershell
    aws --version
    ```
 
-   You need **2.32.0 or newer**, which is the version that added `aws login`. If it's older, run the installer again.
+   You need **2.32.0 or newer**, which is the version that added `aws login`.
 
 ---
 
-## Step 3 — Log in (~1 min)
+## Step 2 — Log in (~1 min)
 
-```bash
+```powershell
 aws login
 ```
 
-The first time, it asks `AWS Region [us-east-1]:`. Type only `us-east-2` and press Enter. Then your browser opens. Pick your active console session, or sign in, and return to the terminal.
+The first time, it asks `AWS Region [us-east-1]:`. Type only `us-east-2` and press Enter. Then your browser opens. Pick the **Sunrise Sprint** console session (open it from AWS Settings → Sunrise Sprint → AWS Console first if needed), and return to the terminal.
 
-Confirm it worked:
+Confirm you're in the right account:
 
-```bash
+```powershell
 aws sts get-caller-identity
 ```
 
-You should see `"Account": "435636069010"`.
+You should see `"Account": "782083514989"` and an ARN containing `AccountFullAccessRole`. If it shows any other account, run `aws logout` and log in again, picking the Sunrise Sprint session.
 
-This gives the CLI short-lived credentials that refresh automatically, so you never create or store access keys. When the session eventually expires, the deploy script tells you, and you just run `aws login` again.
-
----
-
-## Step 4 — Add the files (~2 min)
-
-| File | What to do |
-|---|---|
-| `scripts/deploy.mjs` | New file. Create a `scripts` folder in the project root and put it there. |
-| `package.json` | Add this one line inside `"scripts"`: `"deploy": "vite build && node scripts/deploy.mjs"` |
-| `DEPLOY.md` | Replace the old version with this one. |
-
-**Important:** if you added `.github/workflows/deploy.yml` from the earlier plan, **delete it**. Otherwise every push to GitHub will show a failed workflow run.
+This gives the CLI short-lived credentials that refresh automatically, so no access keys are ever created or stored. When the session eventually expires, the deploy script tells you, and you just run `aws login` again.
 
 ---
 
-## Step 5 — Dry run first (~1 min)
+## Step 3 — Verify the AWS settings (~1 min, one time)
 
-```bash
-npm run deploy -- --dry-run
+These checks were already run and passed. Use them again if anything stops working.
+
+**CloudFront origin, homepage, and HTTPS:**
+
+```powershell
+aws cloudfront get-distribution --id EQAFN7YQ3MY5U --query "Distribution.DistributionConfig.{Origin:Origins.Items[0].DomainName,RootObject:DefaultRootObject,Protocol:DefaultCacheBehavior.ViewerProtocolPolicy}" --output table
 ```
 
-This builds the project and runs every check. It lists what *would* be uploaded but changes nothing. If all the checks pass without errors, you're ready.
+Expected:
+
+| Field | Value |
+|---|---|
+| Origin | `bodydash-utiwari21.s3.us-east-2.amazonaws.com` |
+| Protocol | `redirect-to-https` |
+| RootObject | `index.html` |
+
+**Bucket policy (CloudFront can read the bucket):**
+
+```powershell
+aws s3api get-bucket-policy --bucket bodydash-utiwari21 --query Policy --output text
+```
+
+Expected: a policy allowing `cloudfront.amazonaws.com` to `s3:GetObject`, with the condition `arn:aws:cloudfront::782083514989:distribution/EQAFN7YQ3MY5U`.
+
+---
+
+## Step 4 — Make sure the project files are in place
+
+```
+RealSubwaySurfer/
+├── .gitignore
+├── DEPLOY.md
+├── README.md
+├── index.html
+├── package.json        ← contains the "deploy" script
+├── package-lock.json
+├── scripts/
+│   └── deploy.mjs      ← the deploy script
+└── src/
+    ├── main.js
+    └── style.css
+```
+
+If you added `.github/workflows/deploy.yml` from an earlier plan, delete it. Otherwise every push to GitHub will show a failed workflow run.
+
+---
+
+## Step 5 — Dry run (~1 min)
+
+From the project folder:
+
+```powershell
+cd C:\Users\tiwar\RealSubwaySurfer
+npm run build
+node scripts/deploy.mjs --dry-run
+```
+
+The build and the dry run are two separate commands on purpose. PowerShell can swallow the `--` in `npm run deploy -- --dry-run`, and then npm treats `--dry-run` as its own flag instead of passing it to the script.
+
+You should see the checks pass (account `782083514989`, bucket `bodydash-utiwari21`, domain `d1p30moihm4q7m.cloudfront.net`), then lines starting with `(dryrun) upload:`, ending with `Dry run complete. Nothing was uploaded.` Any `WARNING` or `ERROR` line tells you exactly what to fix.
 
 ---
 
 ## Step 6 — Deploy (~1 min)
 
-```bash
+```powershell
 npm run deploy
 ```
 
-The last line prints your live link:
+The last line prints:
 
 ```
-Deployed! BodyDash is live at https://dxxxxxxxxxxxx.cloudfront.net
+Deployed! BodyDash is live at https://d1p30moihm4q7m.cloudfront.net
 ```
 
-Open it, click **Start camera**, and allow access. Give the first deploy 1–2 minutes for CloudFront to pick it up.
+Wait 1–2 minutes, then open the link, click **Start camera**, and allow access.
 
 ---
 
-## Step 7 — Commit (~1 min)
+## Step 7 — Commit
 
-```bash
+```powershell
 git add scripts/deploy.mjs package.json DEPLOY.md
 git commit -m "Add one-command AWS deploy (S3 + CloudFront)"
 git push
@@ -129,7 +163,7 @@ git push
 
 ## Every future update
 
-```bash
+```powershell
 npm run deploy
 ```
 
@@ -141,21 +175,22 @@ If it says you're not logged in, run `aws login` first.
 
 | Problem | Fix |
 |---|---|
-| `aws` is not recognized | Open a new terminal after installing. If it still fails, run the installer again. |
-| `Invalid choice: 'login'` | Your CLI is older than 2.32.0. Run the installer again to upgrade. |
+| `aws` is not recognized | Quit VS Code completely (or close every terminal window) and reopen it. For the current window only, run `set PATH=%PATH%;C:\Users\tiwar\AppData\Local\Programs\Amazon\AWSCLIV2` in Command Prompt. |
+| `WARNING: This terminal can't see the AWS CLI on its PATH` | The deploy still works; the script found the CLI in its install folder. Quit and reopen VS Code to stop the warning. |
+| `Invalid choice: 'login'` | Your CLI is older than 2.32.0. Rerun the install command to upgrade. |
+| Region prompt error `doesn't match a supported format` | At the `AWS Region` prompt, type only `us-east-2`, not a full command. |
 | `ERROR: You are not logged in` | Run `aws login`. |
 | `ERROR: You are logged in to account ...` | Run `aws logout`, then `aws login`, and pick the Sunrise Sprint session. |
-| `AccessDenied` during upload or the cache refresh | Make sure the console session you chose during `aws login` is the Sunrise Sprint project's. If it still fails, use the manual fallback below. |
-| Site shows an XML `AccessDenied` page | Recheck step 1: the bucket policy or default root object. |
+| `AccessDenied` during upload or the cache refresh | Confirm `aws sts get-caller-identity` shows `782083514989`. If it does and it still fails, use the manual fallback below. |
+| Site shows an XML `AccessDenied` page | Rerun the step 3 checks, or wait for the first deploy to finish. |
 | Old version still showing | Wait 1–2 minutes, then hard-refresh with Ctrl+Shift+R. |
 | Camera doesn't start | Use the `https://` link, and check site permissions (the lock icon in the address bar). |
-| `No S3 origin found` | Set `bucket: "your-bucket-name"` in the `CONFIG` block at the top of `scripts/deploy.mjs`. |
 
 ### Manual fallback (no CLI needed)
 
 1. Run `npm run build`.
-2. In **S3**, open your bucket, choose **Upload**, and drag in the **contents** of `dist/` (the `index.html` file and the `assets` folder, not the `dist` folder itself). Then choose **Upload**.
-3. In **CloudFront**, open your distribution, go to **Invalidations**, choose **Create invalidation**, enter `/*`, and create it.
+2. In the Sunrise Sprint console, open **S3**, then `bodydash-utiwari21`, and choose **Upload**. Drag in the **contents** of `dist/` (the `index.html` file and the `assets` folder, not the `dist` folder itself), then choose **Upload**.
+3. In **CloudFront**, open `EQAFN7YQ3MY5U`, go to **Invalidations**, choose **Create invalidation**, enter `/*`, and create it.
 
 ---
 
@@ -171,4 +206,4 @@ Your account is on the Free plan, which ends **Apr 6, 2027**. When it ends, AWS 
 - **Why a private bucket?** Origin Access Control means only this CloudFront distribution can read the bucket. Nobody can bypass the CDN.
 - **How are credentials handled?** `aws login` issues short-lived credentials from the console session and rotates them automatically. No long-term access keys exist anywhere to leak.
 - **Caching strategy:** Vite fingerprints asset filenames, so those are cached for a year, while `index.html` is never cached. Assets upload before `index.html`, so a new page never references files that aren't there yet.
-- **Deploy safety:** the script refuses to run against the wrong AWS account, warns about misconfigured CloudFront settings before uploading, and supports a `--dry-run` mode.
+- **Deploy safety:** the script refuses to run against the wrong AWS account, warns about misconfigured CloudFront settings before uploading, and supports a dry-run mode. The account guard caught a real login mix-up during setup.
